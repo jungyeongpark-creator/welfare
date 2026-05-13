@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>세아제강 경조사 대시보드</title>
+<meta name="description" content="세아제강 임직원 경조사 정보 및 계좌번호 원클릭 복사">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="경조사">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root {
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --border: #dde1e7;
+  --text: #1c1e21;
+  --sub: #65676b;
+  --red: #c0392b;
+  --blue: #1877f2;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); color: var(--text); }
+
+/* ── 헤더 ── */
+.hdr {
+  background: #1a1a2e;
+  color: #fff;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+}
+.hdr-l { display: flex; align-items: center; gap: 12px; }
+.logo { background: var(--red); font-weight: 900; font-size: 14px;
+        padding: 4px 9px; border-radius: 5px; letter-spacing: -.5px; }
+.hdr-title { font-size: 17px; font-weight: 700; }
+.hdr-r { display: flex; align-items: center; gap: 10px; font-size: 12px; color: rgba(255,255,255,.6); }
+.ts { text-align: right; line-height: 1.5; }
+
+/* ── 새로고침 버튼 ── */
+.btn-ref {
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.3);
+  color: #fff;
+  padding: 6px 14px; border-radius: 6px;
+  font-size: 13px; cursor: pointer; font-family: inherit;
+  display: flex; align-items: center; gap: 5px;
+  transition: background .2s;
+}
+.btn-ref:hover { background: rgba(255,255,255,.25); }
+
+/* ── 통계 바 ── */
+.stats {
+  max-width: 900px; margin: 20px auto 12px;
+  padding: 0 16px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.chip {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 14px; font-size: 13px;
+  display: flex; align-items: center; gap: 6px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.chip b { font-weight: 700; }
+.filters { margin-left: auto; display: flex; gap: 6px; }
+.fb {
+  padding: 4px 12px; border-radius: 20px;
+  border: 1px solid var(--border); background: var(--card);
+  font-size: 12px; cursor: pointer; font-family: inherit;
+  transition: all .15s;
+}
+.fb.on { background: var(--red); color: #fff; border-color: var(--red); }
+
+/* ── 카드 목록 ── */
+.list { max-width: 900px; margin: 0 auto 32px; padding: 0 16px;
+        display: flex; flex-direction: column; gap: 10px; }
+
+.card {
+  background: var(--card);
+  border-radius: 10px;
+  border-left: 4px solid #ccc;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+  padding: 14px 18px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+.card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.13); }
+.card.funeral { border-left-color: #444; background: #f8f9fa; }
+.card.wedding { border-left-color: #e83e5a; background: #fff5f7; }
+.card.birth   { border-left-color: #0075ca; background: #f0f7ff; }
+.card.other   { border-left-color: #d4a017; background: #fffbf0; }
+
+.tag {
+  display: inline-block;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 4px;
+  margin-right: 6px; flex-shrink: 0;
+}
+.funeral .tag { background: #444; color: #fff; }
+.wedding .tag { background: #e83e5a; color: #fff; }
+.birth   .tag { background: #0075ca; color: #fff; }
+.other   .tag { background: #d4a017; color: #fff; }
+
+.title { font-size: 14px; font-weight: 600; line-height: 1.4; }
+.meta  { margin-top: 5px; font-size: 11px; color: var(--sub); display: flex; gap: 14px; }
+
+/* ── 계좌 박스 ── */
+.acc-box {
+  background: rgba(0,0,0,.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 220px;
+  text-align: center;
+}
+.acc-lbl { font-size: 10px; color: var(--sub); font-weight: 700; letter-spacing: .5px; margin-bottom: 3px; }
+.acc-who { font-size: 12px; font-weight: 600; color: var(--sub); margin-bottom: 2px; }
+.acc-num { font-size: 16px; font-weight: 800; font-family: 'Courier New', monospace;
+           letter-spacing: 1.5px; margin-bottom: 8px; color: var(--text); }
+.btn-copy {
+  width: 100%; padding: 7px 0;
+  background: var(--blue); color: #fff;
+  border: none; border-radius: 6px;
+  font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  transition: background .2s;
+}
+.btn-copy:hover  { background: #166fe5; }
+.btn-copy.ok     { background: #28a745; }
+.no-acc { font-size: 12px; color: var(--sub); padding: 10px 8px; }
+
+.seah-link { font-size: 11px; color: var(--blue); text-decoration: none; display: block; margin-top: 6px; }
+.seah-link:hover { text-decoration: underline; }
+
+/* ── 빈 상태 / 안내 ── */
+.empty { text-align: center; padding: 60px 20px; color: var(--sub); }
+.empty .ico { font-size: 44px; margin-bottom: 10px; }
+.empty h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; }
+.empty p  { font-size: 13px; line-height: 1.7; }
+
+/* ── 반응형 ── */
+@media(max-width:640px){
+  .card { grid-template-columns: 1fr; }
+  .acc-box { min-width: unset; }
+  .filters { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════ -->
+<div class="hdr">
+  <div class="hdr-l">
+    <span class="logo">SeAH</span>
+    <span class="hdr-title">세아제강 경조사</span>
+  </div>
+  <div class="hdr-r">
+    <div class="ts">
+      <div id="tsLine1">마지막 업데이트: —</div>
+      <div id="tsLine2"></div>
+    </div>
+    <button class="btn-ref" onclick="tryLiveLoad()">↻ 새로고침</button>
+  </div>
+</div>
+
+<!-- ══ STATS ════════════════════════════════════════════════════ -->
+<div class="stats" id="statsBar" style="display:none">
+  <div class="chip"><div class="dot" style="background:#444"></div>부고 <b id="n1">0</b></div>
+  <div class="chip"><div class="dot" style="background:#e83e5a"></div>결혼 <b id="n2">0</b></div>
+  <div class="chip"><div class="dot" style="background:#0075ca"></div>출산 <b id="n3">0</b></div>
+  <div class="chip">전체 <b id="n0">0</b>건</div>
+  <div class="filters">
+    <button class="fb on" data-f="all">전체</button>
+    <button class="fb"    data-f="funeral">부고</button>
+    <button class="fb"    data-f="happy">경사</button>
+  </div>
+</div>
+
+<!-- ══ CARD LIST ════════════════════════════════════════════════ -->
+<div class="list" id="cardList"></div>
+
+<!-- ══════════════════════════════════════════════════════════════
+  DATA BLOCK — Claude 스킬이 이 블록을 교체합니다
+  ============================================================= -->
+<script id="seahData">
+window.SEAH_DATA = {
+  "updatedAt": "2026-05-13 13:11",
+  "items": [
+    {"id":7168,"title":"[부고] 세아제강 포항공장 소경2공장 최인로 주임 부친상","type":"funeral","author":"신예지","date":"2026.05.11","holder":"최인로","bank":"국민은행","accountNum":"83140101309589"},
+    {"id":7167,"title":"[부고] 세아제강 영업1팀 함형돈 차장 모친 별세","type":"funeral","author":"신미경","date":"2026.05.11","holder":"함형돈","bank":"국민은행","accountNum":"63290101374216"},
+    {"id":7165,"title":"[부고] 세아제강 포항공장 중경생산팀 조영근 사원 외조모상","type":"funeral","author":"손수현","date":"2026.05.11","holder":"조영근","bank":"국민은행","accountNum":"99080200069775"},
+    {"id":7155,"title":"♥축 결혼♥ 세아제강 포항공장 소경2공장 권원경 사원 본인 결혼","type":"wedding","author":"신예지","date":"2026.05.08","holder":"권원경","bank":"우리은행","accountNum":"1002-861-288718"},
+    {"id":7152,"title":"🧡축 탄생🧡 세아제강 STS수출팀 김윤동 과장 득남","type":"birth","author":"백지연","date":"2026.05.06","holder":"","bank":"","accountNum":""},
+    {"id":7132,"title":"[부고]세아제강 인사팀 안미경 대리 형제상","type":"funeral","author":"김소희","date":"2026.05.01","holder":"안미경","bank":"신한은행","accountNum":"31012426730"},
+    {"id":7131,"title":"[부고] 세아제강 순천공장 안전환경파트 박승호 PL 빙부상","type":"funeral","author":"김경환","date":"2026.05.01","holder":"박승호","bank":"기업은행","accountNum":"001-240504-01-010"},
+    {"id":7124,"title":"♥ 축 결혼 ♥ 세아제강 STS내수팀 김종문 사원 본인 결혼","type":"wedding","author":"조현식","date":"2026.04.28","holder":"김종문","bank":"신한은행","accountNum":"110472515001"},
+    {"id":7087,"title":"🧡축 탄생🧡 세아제강 중경1공장 최종현 사원 득녀","type":"birth","author":"이지민","date":"2026.04.10","holder":"","bank":"","accountNum":""},
+    {"id":7029,"title":"♥축결혼♥ 세아제강 포항공장 재료처리팀 서민규 사원 본인 결혼","type":"wedding","author":"이현민","date":"2026.03.17","holder":"서민규","bank":"우리은행","accountNum":"1002-946-451567"},
+    {"id":7028,"title":"♥축결혼♥ 세아제강 STS내수팀 이재경 대리 본인 결혼","type":"wedding","author":"조현식","date":"2026.03.17","holder":"이재경","bank":"국민은행","accountNum":"546901-01-205824"},
+    {"id":7027,"title":"♥ 축 결혼 ♥ 세아제강 중경1공장 양현철 사원 본인 결혼","type":"wedding","author":"이지민","date":"2026.03.17","holder":"양현철","bank":"신한은행","accountNum":"110389723784"},
+    {"id":6975,"title":"♥축결혼♥ 세아제강 포항공장 조희현 대리 본인 결혼","type":"wedding","author":"이현민","date":"2026.02.27","holder":"조희현","bank":"하나은행","accountNum":"200-910-157-61307"},
+    {"id":6933,"title":"[부고] 세아제강 포항공장 안전환경팀 박진석 사원 부친 별세","type":"funeral","author":"손영준","date":"2026.01.29","holder":"","bank":"","accountNum":""},
+    {"id":6915,"title":"[부고] 세아제강 인사팀 장완주 차장 장인상","type":"funeral","author":"김소희","date":"2026.01.19","holder":"장완주","bank":"하나은행","accountNum":""},
+    {"id":6910,"title":"🧡축 탄생🧡 세아제강 STS내수팀 김성택 과장 공주님 탄생","type":"birth","author":"송향민","date":"2026.01.15","holder":"","bank":"","accountNum":""},
+    {"id":6907,"title":"[❤️축결혼❤️] 세아제강 자금팀 손정국 대리 본인 결혼","type":"wedding","author":"김소연","date":"2026.01.13","holder":"손정국","bank":"하나은행","accountNum":"569-910319-72707"},
+    {"id":6904,"title":"🧡축 탄생🧡 세아제강 R&D센터 이대희 선임연구원 득남","type":"birth","author":"이지민","date":"2026.01.10","holder":"","bank":"","accountNum":""},
+    {"id":6869,"title":"♥축결혼♥ 세아제강 중경1공장 정민수 사원 본인 결혼","type":"wedding","author":"임도연","date":"2025.12.30","holder":"","bank":"","accountNum":""},
+    {"id":5791,"title":"[부고] 세아제강 STS내수팀 김상현 대리 외조모상","type":"funeral","author":"송향민","date":"2025.11.20","holder":"김상현","bank":"국민은행","accountNum":"466402-01-326264"},
+    {"id":5788,"title":"♥축 결 혼♥ 세아제강 영업2팀 홍성원 대리 본인 결혼","type":"wedding","author":"명원선","date":"2025.11.20","holder":"","bank":"","accountNum":""},
+    {"id":5748,"title":"[♥축결혼♥] 세아제강 중경1공장 박지민 사원 본인 결혼","type":"wedding","author":"임도연","date":"2025.11.10","holder":"박지민","bank":"우리은행","accountNum":"1002-459-190204"},
+    {"id":5691,"title":"[축결혼] 前 세아제강 김진읍 이사 자녀 결혼","type":"wedding","author":"최영조","date":"2025.10.23","holder":"김진읍","bank":"국민은행","accountNum":"821701-01-345935"},
+    {"id":5648,"title":"[축 탄생] 세아제강 중경1공장 이도형 사원 득녀 👶🏻","type":"birth","author":"이도형","date":"2025.10.13","holder":"","bank":"","accountNum":""}
+  ]
+};
+</script>
+
+<script>
+/* ════════════════════════════════════════════
+   유틸
+══════════════════════════════════════════════ */
+const BASE = 'https://seahworks.seah.co.kr';
+const BOARD = 'BD_220404HR5G94';
+const DETAIL = id => `${BASE}/board/data/view/${BOARD}/${id}`;
+
+function classifyType(title='') {
+  if (/부고|별세|상$|빙부|빙모|모친|부친|조부|조모|외조|형제|자부|처부|처모/.test(title)) return 'funeral';
+  if (/결혼|혼인|♥|♡|축 결혼/.test(title)) return 'wedding';
+  if (/출산|탄생|득남|득녀|🧡|👶/.test(title)) return 'birth';
+  return 'other';
+}
+const typeLabel = {funeral:'부 고', wedding:'결 혼', birth:'출 산', other:'기타'};
+const typeClass = {funeral:'funeral', wedding:'wedding', birth:'birth', other:'other'};
+
+/* ════════════════════════════════════════════
+   렌더링
+══════════════════════════════════════════════ */
+let _all = [], _filter = 'all';
+
+function render(items) {
+  const list = document.getElementById('cardList');
+  if (!items.length) {
+    list.innerHTML = `<div class="empty"><div class="ico">📋</div>
+      <h3>해당 항목이 없습니다</h3></div>`;
+    return;
+  }
+  list.innerHTML = items.map(cardHTML).join('');
+}
+
+function cardHTML(it) {
+  const tc = typeClass[it.type] || 'other';
+  const tl = typeLabel[it.type] || '기타';
+  const hasAcc = it.accountNum;
+
+  const accSection = hasAcc
+    ? `<div class="acc-box">
+         <div class="acc-lbl">💰 계좌정보</div>
+         <div class="acc-who">${it.holder} · ${it.bank}</div>
+         <div class="acc-num">${it.accountNum}</div>
+         <button class="btn-copy"
+           onclick="doCopy('${it.accountNum}','${it.holder}(${it.bank})',this)">
+           📋 계좌번호 복사
+         </button>
+         <a class="seah-link" href="${DETAIL(it.id)}" target="_blank">세아웍스에서 보기 →</a>
+       </div>`
+    : `<div class="acc-box">
+         <div class="no-acc">계좌정보 없음</div>
+         <a class="seah-link" href="${DETAIL(it.id)}" target="_blank">세아웍스에서 보기 →</a>
+       </div>`;
+
+  return `<div class="card ${tc}">
+    <div>
+      <div style="display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap;margin-bottom:6px">
+        <span class="tag">${tl}</span>
+        <span class="title">${it.title}</span>
+      </div>
+      <div class="meta">
+        <span>📅 ${it.date||'—'}</span>
+        <span>✍️ ${it.author||'—'}</span>
+      </div>
+    </div>
+    ${accSection}
+  </div>`;
+}
+
+/* ════════════════════════════════════════════
+   계좌번호 복사
+══════════════════════════════════════════════ */
+function doCopy(num, label, btn) {
+  (navigator.clipboard?.writeText(num) || Promise.reject())
+    .catch(() => { const t=document.createElement('textarea');t.value=num;
+      document.body.appendChild(t);t.select();document.execCommand('copy');
+      document.body.removeChild(t); })
+    .finally(() => {
+      btn.textContent = `✅ 복사 완료 — ${label}`;
+      btn.classList.add('ok');
+      setTimeout(() => { btn.textContent='📋 계좌번호 복사'; btn.classList.remove('ok'); }, 2500);
+    });
+}
+
+/* ════════════════════════════════════════════
+   필터
+══════════════════════════════════════════════ */
+document.querySelectorAll('.fb').forEach(b => b.addEventListener('click', () => {
+  _filter = b.dataset.f;
+  document.querySelectorAll('.fb').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  applyFilter();
+}));
+
+function applyFilter() {
+  const shown = _filter === 'all' ? _all
+    : _filter === 'funeral' ? _all.filter(i=>i.type==='funeral')
+    : _all.filter(i=>i.type!=='funeral');
+  render(shown);
+}
+
+/* ════════════════════════════════════════════
+   데이터 표시
+══════════════════════════════════════════════ */
+function showData(data) {
+  _all = data.items || [];
+  document.getElementById('tsLine1').textContent = '마지막 업데이트: ' + data.updatedAt;
+  document.getElementById('tsLine2').textContent = `세아제강 경조사 ${_all.length}건`;
+  document.getElementById('n0').textContent = _all.length;
+  document.getElementById('n1').textContent = _all.filter(i=>i.type==='funeral').length;
+  document.getElementById('n2').textContent = _all.filter(i=>i.type==='wedding').length;
+  document.getElementById('n3').textContent = _all.filter(i=>i.type==='birth').length;
+  document.getElementById('statsBar').style.display = 'flex';
+  applyFilter();
+}
+
+/* ════════════════════════════════════════════
+   실시간 로드 시도 (세아웍스 세션 있을 때)
+══════════════════════════════════════════════ */
+async function tryLiveLoad() {
+  try {
+    const r = await fetch('/proxy/api/board/list?board_id=BD_220404HR5G94&offset=0&count=50&me_created=N',
+      {credentials:'include'});
+    if (!r.ok) throw new Error('not on seahworks');
+    const j = await r.json();
+    if (j.code !== 'CD_SUCCESS') throw new Error('api error');
+    const seahItems = (j.data?.board_contents_info||[]).filter(i=>i.COL_02==='세아제강');
+    // 계좌번호는 상세 페이지에서만 가져올 수 있어 여기선 제목/날짜만 표시
+    const items = seahItems.map(i => ({
+      id: i.board_data_id,
+      title: i.COL_01,
+      type: classifyType(i.COL_01),
+      author: i.COL_03,
+      date: i.COL_04,
+      accountNum: '',
+      holder: '',
+      bank: ''
+    }));
+    showData({ updatedAt: new Date().toLocaleString('ko-KR') + ' (계좌 미포함)', items });
+    alert('목록만 실시간 로드됐습니다.\n계좌번호 포함 전체 갱신은 Claude 스킬을 실행하세요.');
+  } catch(e) {
+    alert('세아웍스 로그인 세션이 없습니다.\nClaude에서 "경조사 대시보드 갱신" 스킬을 실행하세요.');
+  }
+}
+
+/* ════════════════════════════════════════════
+   Service Worker 등록
+══════════════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+/* ════════════════════════════════════════════
+   초기화
+══════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  if (window.SEAH_DATA) {
+    showData(window.SEAH_DATA);
+  } else {
+    document.getElementById('cardList').innerHTML = `
+      <div class="empty">
+        <div class="ico">📋</div>
+        <h3>데이터가 없습니다</h3>
+        <p>Claude에서 <strong>"경조사 대시보드 갱신"</strong> 스킬을 실행하면<br>
+        세아제강 경조사 목록과 계좌번호가 자동으로 채워집니다.</p>
+        <p style="margin-top:12px;color:#999;font-size:12px">
+          세아웍스에 로그인된 브라우저라면 ↻ 새로고침으로 목록을 볼 수 있습니다.<br>
+          (계좌번호는 스킬 실행 시에만 표시)
+        </p>
+      </div>`;
+  }
+});
+</script>
+</body>
+</html>
