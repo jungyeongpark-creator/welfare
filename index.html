@@ -169,6 +169,16 @@ body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); color: v
       <div id="tsLine2"></div>
     </div>
     <button class="btn-ref" onclick="tryLiveLoad()">↻ 새로고침</button>
+    <button class="btn-ref" id="btnInstall" style="display:none;background:rgba(0,150,100,.5);border-color:rgba(0,200,130,.5)" onclick="doInstall()">📲 앱 설치</button>
+  </div>
+</div>
+
+<!-- PWA 설치 배너 -->
+<div id="installBanner" style="display:none;background:#16213e;color:#fff;padding:12px 20px;display:none;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid #c0392b;">
+  <div style="font-size:13px">📲 <strong>홈 화면에 추가</strong>하면 앱처럼 바로 열 수 있어요</div>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button onclick="doInstall()" style="background:#c0392b;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:700">설치</button>
+    <button onclick="dismissBanner()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer">✕</button>
   </div>
 </div>
 
@@ -181,7 +191,8 @@ body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); color: v
   <div class="filters">
     <button class="fb on" data-f="all">전체</button>
     <button class="fb"    data-f="funeral">부고</button>
-    <button class="fb"    data-f="happy">경사</button>
+    <button class="fb"    data-f="wedding">결혼</button>
+    <button class="fb"    data-f="birth">출산</button>
   </div>
 </div>
 
@@ -260,6 +271,10 @@ function cardHTML(it) {
   const tl = typeLabel[it.type] || '기타';
   const hasAcc = it.accountNum;
 
+  const noAccMsg = it.type === 'birth'
+    ? '🍼 출산 경조금은 복리후생팀에서 직접 처리'
+    : '계좌정보 없음 — 세아웍스 원문 확인';
+
   const accSection = hasAcc
     ? `<div class="acc-box">
          <div class="acc-lbl">💰 계좌정보</div>
@@ -272,7 +287,7 @@ function cardHTML(it) {
          <a class="seah-link" href="${DETAIL(it.id)}" target="_blank">세아웍스에서 보기 →</a>
        </div>`
     : `<div class="acc-box">
-         <div class="no-acc">계좌정보 없음</div>
+         <div class="no-acc">${noAccMsg}</div>
          <a class="seah-link" href="${DETAIL(it.id)}" target="_blank">세아웍스에서 보기 →</a>
        </div>`;
 
@@ -317,9 +332,7 @@ document.querySelectorAll('.fb').forEach(b => b.addEventListener('click', () => 
 }));
 
 function applyFilter() {
-  const shown = _filter === 'all' ? _all
-    : _filter === 'funeral' ? _all.filter(i=>i.type==='funeral')
-    : _all.filter(i=>i.type!=='funeral');
+  const shown = _filter === 'all' ? _all : _all.filter(i => i.type === _filter);
   render(shown);
 }
 
@@ -365,6 +378,47 @@ async function tryLiveLoad() {
   } catch(e) {
     alert('세아웍스 로그인 세션이 없습니다.\nClaude에서 "경조사 대시보드 갱신" 스킬을 실행하세요.');
   }
+}
+
+/* ════════════════════════════════════════════
+   PWA 설치 핸들러
+══════════════════════════════════════════════ */
+let _installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _installPrompt = e;
+  // 헤더 설치 버튼 표시
+  const btn = document.getElementById('btnInstall');
+  if (btn) btn.style.display = 'flex';
+  // 하단 배너 표시 (이미 무시한 적 없으면)
+  if (!sessionStorage.getItem('pwa_dismissed')) {
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'flex';
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  _installPrompt = null;
+  const btn = document.getElementById('btnInstall');
+  if (btn) btn.style.display = 'none';
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+});
+
+function doInstall() {
+  if (!_installPrompt) {
+    alert('설치 준비 중입니다. 페이지를 새로고침 후 다시 시도해주세요.');
+    return;
+  }
+  _installPrompt.prompt();
+  _installPrompt.userChoice.then(() => { _installPrompt = null; });
+}
+
+function dismissBanner() {
+  sessionStorage.setItem('pwa_dismissed', '1');
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
 }
 
 /* ════════════════════════════════════════════
