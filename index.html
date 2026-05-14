@@ -168,7 +168,7 @@ body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); color: v
       <div id="tsLine1">마지막 업데이트: —</div>
       <div id="tsLine2"></div>
     </div>
-    <button class="btn-ref" onclick="tryLiveLoad()">↻ 새로고침</button>
+    <button class="btn-ref" onclick="location.reload(true)">↻ 새로고침</button>
     <button class="btn-ref" id="btnInstall" style="display:none;background:rgba(0,150,100,.5);border-color:rgba(0,200,130,.5)" onclick="doInstall()">📲 앱 설치</button>
   </div>
 </div>
@@ -236,9 +236,6 @@ window.SEAH_DATA = {
 </script>
 
 <script>
-/* ════════════════════════════════════════════
-   유틸
-══════════════════════════════════════════════ */
 const BASE = 'https://seahworks.seah.co.kr';
 const BOARD = 'BD_220404HR5G94';
 const DETAIL = id => `${BASE}/board/data/view/${BOARD}/${id}`;
@@ -252,16 +249,12 @@ function classifyType(title='') {
 const typeLabel = {funeral:'부 고', wedding:'결 혼', birth:'출 산', other:'기타'};
 const typeClass = {funeral:'funeral', wedding:'wedding', birth:'birth', other:'other'};
 
-/* ════════════════════════════════════════════
-   렌더링
-══════════════════════════════════════════════ */
 let _all = [], _filter = 'all';
 
 function render(items) {
   const list = document.getElementById('cardList');
   if (!items.length) {
-    list.innerHTML = `<div class="empty"><div class="ico">📋</div>
-      <h3>해당 항목이 없습니다</h3></div>`;
+    list.innerHTML = `<div class="empty"><div class="ico">📋</div><h3>해당 항목이 없습니다</h3></div>`;
     return;
   }
   list.innerHTML = items.map(cardHTML).join('');
@@ -271,60 +264,19 @@ function cardHTML(it) {
   const tc = typeClass[it.type] || 'other';
   const tl = typeLabel[it.type] || '기타';
   const hasAcc = it.accountNum;
-
-  const noAccMsg = it.type === 'birth'
-    ? '🍼 출산 경조금은 복리후생팀에서 직접 처리'
-    : '계좌정보 없음 — 세아웍스 원문 확인';
-
+  const noAccMsg = it.type === 'birth' ? '🍼 출산 경조금은 복리후생팀에서 직접 처리' : '계좌정보 없음 — 세아웍스 원문 확인';
   const accSection = hasAcc
-    ? `<div class="acc-box">
-         <div class="acc-lbl">💰 계좌정보</div>
-         <div class="acc-who">${it.holder} · ${it.bank}</div>
-         <div class="acc-num">${it.accountNum}</div>
-         <button class="btn-copy"
-           onclick="doCopy('${it.accountNum}','${it.holder}(${it.bank})',this)">
-           📋 계좌번호 복사
-         </button>
-         <a class="seah-link" href="${DETAIL(it.id)}" target="_blank">세아웍스에서 보기 →</a>
-       </div>`
-    : `<div class="acc-box">
-         <div class="no-acc">${noAccMsg}</div>
-         <a class="seah-link" href="${DETAIL(it.id)}" target="_blank">세아웍스에서 보기 →</a>
-       </div>`;
-
-  return `<div class="card ${tc}">
-    <div>
-      <div style="display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap;margin-bottom:6px">
-        <span class="tag">${tl}</span>
-        <span class="title">${it.title}</span>
-      </div>
-      <div class="meta">
-        <span>📅 ${it.date||'—'}</span>
-        <span>✍️ ${it.author||'—'}</span>
-      </div>
-    </div>
-    ${accSection}
-  </div>`;
+    ? `<div class="acc-box"><div class="acc-lbl">💰 계좌정보</div><div class="acc-who">${it.holder} · ${it.bank}</div><div class="acc-num">${it.accountNum}</div><button class="btn-copy" onclick="doCopy('${it.accountNum}','${it.holder}(${it.bank})',this)">📋 계좌번호 복사</button><a class="seah-link" href="${DETAIL(it.id)}" target="_blank">세아웍스에서 보기 →</a></div>`
+    : `<div class="acc-box"><div class="no-acc">${noAccMsg}</div><a class="seah-link" href="${DETAIL(it.id)}" target="_blank">세아웍스에서 보기 →</a></div>`;
+  return `<div class="card ${tc}"><div><div style="display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap;margin-bottom:6px"><span class="tag">${tl}</span><span class="title">${it.title}</span></div><div class="meta"><span>📅 ${it.date||'—'}</span><span>✍️ ${it.author||'—'}</span></div></div>${accSection}</div>`;
 }
 
-/* ════════════════════════════════════════════
-   계좌번호 복사
-══════════════════════════════════════════════ */
 function doCopy(num, label, btn) {
   (navigator.clipboard?.writeText(num) || Promise.reject())
-    .catch(() => { const t=document.createElement('textarea');t.value=num;
-      document.body.appendChild(t);t.select();document.execCommand('copy');
-      document.body.removeChild(t); })
-    .finally(() => {
-      btn.textContent = `✅ 복사 완료 — ${label}`;
-      btn.classList.add('ok');
-      setTimeout(() => { btn.textContent='📋 계좌번호 복사'; btn.classList.remove('ok'); }, 2500);
-    });
+    .catch(() => { const t=document.createElement('textarea');t.value=num;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t); })
+    .finally(() => { btn.textContent=`✅ 복사 완료 — ${label}`;btn.classList.add('ok');setTimeout(()=>{btn.textContent='📋 계좌번호 복사';btn.classList.remove('ok');},2500); });
 }
 
-/* ════════════════════════════════════════════
-   필터
-══════════════════════════════════════════════ */
 document.querySelectorAll('.fb').forEach(b => b.addEventListener('click', () => {
   _filter = b.dataset.f;
   document.querySelectorAll('.fb').forEach(x => x.classList.remove('on'));
@@ -337,9 +289,6 @@ function applyFilter() {
   render(shown);
 }
 
-/* ════════════════════════════════════════════
-   데이터 표시
-══════════════════════════════════════════════ */
 function showData(data) {
   _all = data.items || [];
   document.getElementById('tsLine1').textContent = '마지막 업데이트: ' + data.updatedAt;
@@ -352,47 +301,13 @@ function showData(data) {
   applyFilter();
 }
 
-/* ════════════════════════════════════════════
-   실시간 로드 시도 (세아웍스 세션 있을 때)
-══════════════════════════════════════════════ */
-async function tryLiveLoad() {
-  try {
-    const r = await fetch('/proxy/api/board/list?board_id=BD_220404HR5G94&offset=0&count=50&me_created=N',
-      {credentials:'include'});
-    if (!r.ok) throw new Error('not on seahworks');
-    const j = await r.json();
-    if (j.code !== 'CD_SUCCESS') throw new Error('api error');
-    const seahItems = (j.data?.board_contents_info||[]).filter(i=>i.COL_02==='세아제강');
-    // 계좌번호는 상세 페이지에서만 가져올 수 있어 여기선 제목/날짜만 표시
-    const items = seahItems.map(i => ({
-      id: i.board_data_id,
-      title: i.COL_01,
-      type: classifyType(i.COL_01),
-      author: i.COL_03,
-      date: i.COL_04,
-      accountNum: '',
-      holder: '',
-      bank: ''
-    }));
-    showData({ updatedAt: new Date().toLocaleString('ko-KR') + ' (계좌 미포함)', items });
-    alert('목록만 실시간 로드됐습니다.\n계좌번호 포함 전체 갱신은 Claude 스킬을 실행하세요.');
-  } catch(e) {
-    alert('세아웍스 로그인 세션이 없습니다.\nClaude에서 "경조사 대시보드 갱신" 스킬을 실행하세요.');
-  }
-}
-
-/* ════════════════════════════════════════════
-   PWA 설치 핸들러
-══════════════════════════════════════════════ */
 let _installPrompt = null;
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   _installPrompt = e;
-  // 헤더 설치 버튼 표시
   const btn = document.getElementById('btnInstall');
   if (btn) btn.style.display = 'flex';
-  // 하단 배너 표시 (이미 무시한 적 없으면)
   if (!sessionStorage.getItem('pwa_dismissed')) {
     const banner = document.getElementById('installBanner');
     if (banner) banner.style.display = 'flex';
@@ -408,10 +323,7 @@ window.addEventListener('appinstalled', () => {
 });
 
 function doInstall() {
-  if (!_installPrompt) {
-    alert('설치 준비 중입니다. 페이지를 새로고침 후 다시 시도해주세요.');
-    return;
-  }
+  if (!_installPrompt) { alert('설치 준비 중입니다. 페이지를 새로고침 후 다시 시도해주세요.'); return; }
   _installPrompt.prompt();
   _installPrompt.userChoice.then(() => { _installPrompt = null; });
 }
@@ -422,33 +334,15 @@ function dismissBanner() {
   if (banner) banner.style.display = 'none';
 }
 
-/* ════════════════════════════════════════════
-   Service Worker 등록
-══════════════════════════════════════════════ */
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  });
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
 }
 
-/* ════════════════════════════════════════════
-   초기화
-══════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
   if (window.SEAH_DATA) {
     showData(window.SEAH_DATA);
   } else {
-    document.getElementById('cardList').innerHTML = `
-      <div class="empty">
-        <div class="ico">📋</div>
-        <h3>데이터가 없습니다</h3>
-        <p>Claude에서 <strong>"경조사 대시보드 갱신"</strong> 스킬을 실행하면<br>
-        세아제강 경조사 목록과 계좌번호가 자동으로 채워집니다.</p>
-        <p style="margin-top:12px;color:#999;font-size:12px">
-          세아웍스에 로그인된 브라우저라면 ↻ 새로고침으로 목록을 볼 수 있습니다.<br>
-          (계좌번호는 스킬 실행 시에만 표시)
-        </p>
-      </div>`;
+    document.getElementById('cardList').innerHTML = `<div class="empty"><div class="ico">📋</div><h3>데이터가 없습니다</h3><p>Claude에서 <strong>"경조사 대시보드 갱신"</strong> 스킬을 실행하면<br>세아제강 경조사 목록과 계좌번호가 자동으로 채워집니다.</p><p style="margin-top:12px;color:#999;font-size:12px">세아웍스에 로그인된 브라우저라면 ↻ 새로고침으로 목록을 볼 수 있습니다.<br>(계좌번호는 스킬 실행 시에만 표시)</p></div>`;
   }
 });
 </script>
