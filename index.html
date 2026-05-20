@@ -168,7 +168,7 @@ body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); color: v
       <div id="tsLine1">마지막 업데이트: —</div>
       <div id="tsLine2"></div>
     </div>
-    <button class="btn-ref" onclick="location.reload(true)">↻ 새로고침</button>
+    <button class="btn-ref" onclick="forceRefresh()">↻ 새로고침</button>
     <button class="btn-ref" id="btnInstall" style="display:none;background:rgba(0,150,100,.5);border-color:rgba(0,200,130,.5)" onclick="doInstall()">📲 앱 설치</button>
   </div>
 </div>
@@ -346,6 +346,20 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cardList').innerHTML = `<div class="empty"><div class="ico">📋</div><h3>데이터가 없습니다</h3><p>Claude에서 <strong>"경조사 대시보드 갱신"</strong> 스킬을 실행하면<br>세아제강 경조사 목록과 계좌번호가 자동으로 채워집니다.</p><p style="margin-top:12px;color:#999;font-size:12px">세아웍스에 로그인된 브라우저라면 ↻ 새로고침으로 목록을 볼 수 있습니다.<br>(계좌번호는 스킬 실행 시에만 표시)</p></div>`;
   }
 });
+
+async function forceRefresh() {
+  try {
+    // Service Worker 캐시 전체 삭제
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+    // SW 업데이트 강제
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.update()));
+    }
+  } catch(e) {}
+  location.reload(true);
+}
 </script>
 </body>
 </html>
