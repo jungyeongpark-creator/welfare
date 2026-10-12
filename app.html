@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>세아제강 경조사</title>
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="경조사">
+<link rel="manifest" href="app.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#1a1a2e;--red:#c0392b;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Malgun Gothic',-apple-system,sans-serif;background:var(--bg);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
+.box{max-width:360px;width:100%;text-align:center;}
+.box img{width:96px;height:96px;border-radius:22px;margin-bottom:18px;box-shadow:0 6px 20px rgba(0,0,0,.4);}
+h1{font-size:20px;margin-bottom:6px;}
+p{font-size:13px;color:rgba(255,255,255,.65);line-height:1.6;}
+.btn{display:block;width:100%;margin-top:14px;padding:13px 0;border-radius:10px;border:none;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;}
+.go{background:var(--red);color:#fff;}
+.inst{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);display:none;}
+.hint{margin-top:18px;font-size:12px;color:rgba(255,255,255,.5);line-height:1.7;text-align:left;background:rgba(255,255,255,.06);padding:12px 14px;border-radius:8px;}
+</style>
+</head>
+<body>
+<div class="box">
+  <img src="icon-192.png" alt="">
+  <h1>세아제강 경조사</h1>
+  <p>사내 전용 · 회사 Google 계정으로 로그인</p>
+  <a class="btn go" id="go">경조사 대시보드 열기</a>
+  <button class="btn inst" id="inst">📲 홈 화면에 앱 설치</button>
+  <div class="hint" id="hint">
+    <b>홈 화면에 추가하기</b><br>
+    · 안드로이드 Chrome: ⋮ → 홈 화면에 추가(앱 설치)<br>
+    · 아이폰 Safari: 공유 → 홈 화면에 추가
+  </div>
+</div>
+<script>
+const EXEC='https://script.google.com/a/macros/seah.co.kr/s/AKfycbyWFX4T3trk9y1T84V8Enl_UNq25ycqHHNFC8_aBKwyWcMdx84AuTJJ6aMG1fcTp_po/exec';
+document.getElementById('go').href=EXEC;
+const standalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+if(standalone){location.replace(EXEC);}
+let ev=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e;document.getElementById('inst').style.display='block';});
+document.getElementById('inst').addEventListener('click',()=>{if(ev){ev.prompt();ev.userChoice.then(()=>{ev=null;document.getElementById('inst').style.display='none';});}});
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+</script>
+</body>
+</html>
